@@ -6,7 +6,7 @@ load_dotenv()
 
 
 def main():
-    print("Hello from poisoned-resume-screener!")
+    print("Hello world from poisoned-resume-screener!")
     print(os.environ.get("OPENAI_API_KEY"))
 
 
