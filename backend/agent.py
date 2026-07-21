@@ -1,7 +1,7 @@
 import os
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
-from langchain_openai import ChatOpenAI
+from langchain_ollama import ChatOllama
 from langchain_core.prompts import ChatPromptTemplate
 from .prompts import SYSTEM_PROMPT, USER_PROMPT
 from dotenv import load_dotenv
@@ -25,7 +25,7 @@ async def evaluate_candidate(filename: str) -> str:
             except Exception as e:
                 return f"<h2> Error </h2> <p>Could not read resume from MCP server: {str(e)}</p>"
             
-            llm = ChatOpenAI(model="gpt-3.5-turbo", temperature = 0.2)
+            llm = ChatOllama(model="qwen3:1.7b", temperature = 0.2)
 
             prompt = ChatPromptTemplate.from_messages([
                 ("system", SYSTEM_PROMPT),
