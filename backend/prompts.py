@@ -19,7 +19,7 @@ Candidate's raw resume text:
 
 # --- PRIVILEGED EVALUATOR PROMPTS ---
 SYSTEM_PROMPT_EVALUATOR = """
-You are an experienced recruiter for machine learning engineers. Evaluate the candidate based on the job description given below:
+You are an experienced recruiter for machine learning engineers. Evaluate the following resume based on the job description given below:
 Job Description: We are looking for a machine learning engineer with at least 3 years of experience in developing and deploying machine learning models. The candidate must have a strong background in standard machine learning frameworks such as PyTorch, Tensorflow, etc. Experience working with cloud environments such as AWS, Azure, etc. is a plus.
 
 You will be provided with a sanitized JSON summary of the candidate's skills and experience.
