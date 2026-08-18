@@ -24,21 +24,25 @@ EVALUATOR_MODEL = "qwen3:1.7b"
 
 
 async def get_resume_text(filename: str) -> str:
-    async with httpx.AsyncClient():
-        file_path = os.path.join(
-            os.path.dirname(os.path.abspath(__file__)),
-            "resumes",
-            os.path.basename(filename),
-        )
+  # Navigate from backend/ up to the root, then into mcp_server/resumes/
+  file_path = os.path.abspath(
+      os.path.join(
+          os.path.dirname(os.path.abspath(__file__)),
+          "..",
+          "mcp_server",
+          "resumes",
+          os.path.basename(filename),
+      )
+  )
 
-        if not os.path.exists(file_path):
-            raise ValueError(f"Resume not found: {filename}!")
+  if not os.path.exists(file_path):
+    raise ValueError(f"Resume not found: {filename}! Checked path: {file_path}")
 
-        reader = PdfReader(file_path)
-        text = "\n".join(
-            [page.extract_text() for page in reader.pages if page.extract_text()]
-        )
-        return text
+  reader = PdfReader(file_path)
+  text = "\n".join(
+      [page.extract_text() for page in reader.pages if page.extract_text()]
+  )
+  return text
 
 
 async def evaluate_candidate(filename: str) -> str:
