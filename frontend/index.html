@@ -3,71 +3,84 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HR Screener Dashboard</title>
+    <title>HR Resume Screener</title>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 40px; background-color: #f4f4f9; color: #333; }
-        .container { max-width: 800px; margin: auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        select { padding: 10px; font-size: 16px; margin-right: 10px; border-radius: 4px; border: 1px solid #ccc; }
-        .btn { padding: 10px 20px; font-size: 16px; background: #0056b3; color: white; border: none; cursor: pointer; border-radius: 4px; transition: background 0.2s; }
-        .btn:hover { background: #003d82; }
-        #loading { display: none; margin-top: 15px; font-style: italic; color: #666; }
-        #results { margin-top: 25px; padding: 20px; border: 2px dashed #ccc; background: #fafafa; min-height: 150px; border-radius: 4px; }
-        h2 { color: #0056b3; margin-top: 0; }
+        body { font-family: Arial, sans-serif; background-color: #f4f4f9; padding: 20px; }
+        .container { display: flex; gap: 20px; max-width: 900px; margin: auto; }
+        .panel { background: white; padding: 20px; border-radius: 8px; flex: 1; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h2 { color: #333; margin-top: 0; }
+        .db-status { background: #1e1e1e; color: #00ff00; padding: 15px; font-family: monospace; border-radius: 5px; min-height: 150px; }
+        .btn { padding: 10px 15px; background: #0056b3; color: white; border: none; cursor: pointer; border-radius: 4px; margin-top: 10px; width: 100%; }
+        .btn-secure { background: #28a745; }
+        #status-message { margin-top: 15px; font-weight: bold; color: #d9534f; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Internal HR Screener</h1>
-        <p>Select a candidate's resume to evaluate them against the Machine Learning Engineer job description.</p>
-        
-        <select id="resume-select">
-            <option value="alice_legit.pdf">Alice Engineer (Legit)</option>
-            <option value="bob_malicious.pdf">Bob Hacker (Malicious)</option>
-        </select>
-        <button class="btn" onclick="evaluateCandidate()">Screen Candidate</button>
+        <!-- Control Panel -->
+        <div class="panel">
+            <h2>Upload Candidate Resume</h2>
+            <input type="file" id="pdfUpload" accept=".pdf">
+            
+            <hr style="margin: 20px 0;">
+            
+            <button class="btn" onclick="uploadResume('vulnerable')">1. Process (Vulnerable Agent)</button>
+            <button class="btn btn-secure" onclick="uploadResume('secure')">2. Process (Secure Agent)</button>
 
-        <div id="loading">Evaluating candidate via AI... this may take a few seconds.</div>
-        
-        <div id="results">
-            <em>Evaluation results will appear here.</em>
+            <div id="status-message"></div>
+        </div>
+
+        <!-- DB Status Panel -->
+        <div class="panel">
+            <h2>Live HR Database</h2>
+            <div id="dbOutput" class="db-status">Loading...</div>
+            <button class="btn" style="background:#555; width:auto;" onclick="fetchDB()">Refresh Data</button>
         </div>
     </div>
 
     <script>
-        async function evaluateCandidate() {
-            const filename = document.getElementById('resume-select').value;
-            const resultsDiv = document.getElementById('results');
-            const loadingDiv = document.getElementById('loading');
+        const API_URL = "http://localhost:8000";
 
-            // Reset UI
-            resultsDiv.innerHTML = "";
-            loadingDiv.style.display = "block";
+        async function fetchDB() {
+            const res = await fetch(`${API_URL}/api/db`);
+            const data = await res.json();
+            let html = "";
+            for (const [id, emp] of Object.entries(data)) {
+                let color = emp.status === 'Terminated' ? 'red' : '#00ff00';
+                html += `[${id}] ${emp.name} | Status: <span style="color:${color}">${emp.status}</span><br>`;
+            }
+            document.getElementById('dbOutput').innerHTML = html;
+        }
+
+        async function uploadResume(mode) {
+            const fileInput = document.getElementById('pdfUpload');
+            const statusMsg = document.getElementById('status-message');
+            
+            if (!fileInput.files[0]) {
+                statusMsg.innerText = "Please select a PDF first.";
+                return;
+            }
+
+            statusMsg.innerText = `Processing with ${mode} agent... (Check terminal)`;
+            
+            const formData = new FormData();
+            formData.append("file", fileInput.files[0]);
 
             try {
-                // Call our LangChain/FastAPI backend
-                const response = await fetch('http://localhost:8000/api/evaluate', {
+                const res = await fetch(`${API_URL}/api/upload/${mode}`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ filename: filename })
+                    body: formData
                 });
-
-                const data = await response.json();
-                loadingDiv.style.display = "none";
-
-                if (data.status === "success") {
-                    // THE VULNERABILITY: Insecure Output Handling
-                    // We are taking the raw HTML generated by the LLM and
-                    // injecting it directly into the DOM using innerHTML.
-                    // If the LLM generates a <script> tag, the browser will execute it.
-                    resultsDiv.innerHTML = data.html; 
-                } else {
-                    resultsDiv.innerText = "Backend Error: " + data.detail;
-                }
-            } catch (error) {
-                loadingDiv.style.display = "none";
-                resultsDiv.innerText = "Connection error. Is the FastAPI backend running on port 8000?";
+                const data = await res.json();
+                statusMsg.innerText = data.message;
+                fetchDB(); // Refresh DB after action
+            } catch (err) {
+                statusMsg.innerText = "Error communicating with backend.";
             }
         }
+
+        // Initial fetch
+        fetchDB();
     </script>
 </body>
 </html>
