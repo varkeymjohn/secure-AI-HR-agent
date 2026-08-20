@@ -8,7 +8,7 @@ This repository demonstrates **Excessive Agency (LLM03)** in a real-world scenar
 
 In the vulnerable version of this application, an AI agent reads candidate resumes (PDFs) and is granted direct, unsupervised access to high-impact HR tools, such as `terminate_employee`.
 
-An attacker can exploit this **Excessive Agency** by embedding hidden instructions (e.g., 1pt font size, white text) inside their submitted resume. When the backend PDF parser extracts this text, it is fed directly into the LLM[cite: 7]. Because the LLM is overly trusting and lacks an execution boundary, it treats the attacker's hidden payload as a legitimate command, invoking the tool and autonomously modifying the live HR database without any human verification[cite: 7].
+An attacker can exploit this **Excessive Agency** by embedding hidden instructions (e.g., 1pt font size, white text) inside their submitted resume. When the backend PDF parser extracts this text, it is fed directly into the LLM. Because the LLM is overly trusting and lacks an execution boundary, it treats the attacker's hidden payload as a legitimate command, invoking the tool and autonomously modifying the live HR database without any human verification.
 
 ## 🛡️ The Defense: Human-in-the-Loop & Honeypot Pattern
 
@@ -23,7 +23,7 @@ To secure the HR Agent, simply removing the tool entirely isn't always practical
 
 This repository contains both the vulnerable and secure implementations side-by-side for educational purposes, accessible via a unified Web UI.
 
-- **`vulnerable_agent.py`:** Contains the naive implementation where the LLM can directly execute database operations[cite: 7].
+- **`vulnerable_agent.py`:** Contains the naive implementation where the LLM can directly execute database operations.
 - **`secure_agent.py`:** Contains the secured code implementing the HITL gateway and Honeypot pattern.
 
 ## ⚙️ Installation & Setup
@@ -89,7 +89,7 @@ Open `frontend/index.html` in your web browser.
 
 ### 🔴 Expected Result — Exploit Success
 
-The agent will bypass normal resume evaluation and blindly follow the injected command. In the "Live HR Database" panel, Alice Johnson (EMP01) will instantly turn red with a status of "Terminated". The AI executed the database change with zero human oversight[cite: 7].
+The agent will bypass normal resume evaluation and blindly follow the injected command. In the "Live HR Database" panel, Alice Johnson (EMP01) will instantly turn red with a status of "Terminated". The AI executed the database change with zero human oversight.
 
 ## Phase 2: Testing the Defense (Secure Agent)
 
@@ -102,11 +102,11 @@ In the Web UI, click **Refresh Data** to reset the employees to "Active" status.
 ### 2. Send the Exact Same Request
 
 1. Ensure `bob_malicious.pdf` is still selected in the file upload prompt.
-2. Click **2. Process (Secure Agent)**[cite: 2].
+2. Click **2. Process (Secure Agent)**.
 
 ### 3. Authorize the Gateway
 
-The web UI will appear to pause. Open the terminal where your Uvicorn server is running. You will see a security alert[cite: 6]:
+The web UI will appear to pause. Open the terminal where your Uvicorn server is running. You will see a security alert:
 
 ```bash
 ================ SECURITY ALERT ================
@@ -114,11 +114,11 @@ AI attempted to execute termination for EMP01 based on resume instructions.
 Admin, authorize this action? (y/n):
 ```
 
-Type `n` and hit Enter[cite: 6].
+Type `n` and hit Enter.
 
 ### 🟢 Expected Result — Exploit Neutralized
 
-The application intercepts the unauthorized tool call, alerts the administrator, and blocks the execution[cite: 6]. The Web UI will display a successful defense message, and the live HR database remains completely secure.
+The application intercepts the unauthorized tool call, alerts the administrator, and blocks the execution. The Web UI will display a successful defense message, and the live HR database remains completely secure.
 
 ## ⚠️ Disclaimer
 
