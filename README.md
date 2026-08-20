@@ -1,4 +1,4 @@
-# Secure AI HR Agent: LLM Vulnerability & Defense Lab
+# Secure AI HR Agent: LLM03 - Excessive Agency
 
 An educational laboratory demonstrating critical vulnerabilities in Large Language Model (LLM) applications and the secure architectures required to defend against them. 
 
