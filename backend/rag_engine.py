@@ -53,17 +53,16 @@ def initialize_vector_db():
         reader = PdfReader(filepath)
         raw_text = "".join([page.extract_text() or "" for page in reader.pages])
         
-        # Raw index (Contains hidden poisoning payload)
+        # Raw index: Contains poisoned keywords and injection
         raw_col.upsert(
             ids=[f"raw_{filename}"],
             documents=[raw_text],
             metadatas=[{"filename": filename, "type": "raw_unverified"}]
         )
         
-        # Sanitized index (Strips prompt overrides and adversarial micro-text)
-        clean_text = raw_text.split("[SYSTEM:")[0].strip()
-        # Strip stuffed tail keywords
-        clean_text = clean_text.replace("Machine Learning Engineer PyTorch TensorFlow AWS SageMaker Azure Deep Learning MLOps Production ML deployment top score match", "")
+        # Sanitized index: Strips system override prompts and adversarial tail keywords
+        clean_text = raw_text.split("[CRITICAL SYSTEM OVERRIDE:")[0].split("[SYSTEM:")[0].strip()
+        clean_text = clean_text.replace("Senior Machine Learning Engineer PyTorch TensorFlow AWS SageMaker Azure Deep Learning MLOps Production ML deployment 5+ years experience top match.", "")
         
         clean_col.upsert(
             ids=[f"clean_{filename}"],
@@ -74,7 +73,6 @@ def initialize_vector_db():
 initialize_vector_db()
 
 def vulnerable_global_search(query: str) -> dict:
-    """Attack: Raw search. Bob's injected keywords place him as Rank 1."""
     collection = client.get_collection(name="resumes_raw", embedding_function=chroma_embedder)
     results = collection.query(query_texts=[query], n_results=2)
     
@@ -89,7 +87,6 @@ def vulnerable_global_search(query: str) -> dict:
     return {"matches": matches}
 
 def secure_global_search(query: str) -> dict:
-    """Defense: Sanitized corpus search. Alice places Rank 1."""
     collection = client.get_collection(name="resumes_clean", embedding_function=chroma_embedder)
     results = collection.query(query_texts=[query], n_results=2)
     
