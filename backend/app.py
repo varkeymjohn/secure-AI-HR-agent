@@ -1,41 +1,37 @@
-import os
-import shutil
-from fastapi import FastAPI, UploadFile, File
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from .hr_db import hr_database
-from .vulnerable_agent import process_vulnerable
-from .secure_agent import process_secure
+from pydantic import BaseModel
+from .agent import run_screening_attack, run_screening_defense
+import traceback
 
-app = FastAPI()
+# Ensure FastAPI is initialized to the variable name "app"
+app = FastAPI(title="LLM09 Vector & Embedding Screener API")
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-UPLOAD_DIR = "backend/uploads"
-os.makedirs(UPLOAD_DIR, exist_ok=True)
+class ScreenerRequest(BaseModel):
+    query: str
 
-@app.get("/api/db")
-async def get_db():
-    return hr_database
+@app.post("/api/screen/vulnerable")
+async def screen_vulnerable(req: ScreenerRequest):
+    try:
+        result = await run_screening_attack(req.query)
+        return {"status": "success", "mode": "vulnerable", **result}
+    except Exception as e:
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
 
-@app.post("/api/upload/vulnerable")
-async def upload_vulnerable(file: UploadFile = File(...)):
-    file_path = os.path.join(UPLOAD_DIR, file.filename)
-    with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
-    
-    result = await process_vulnerable(file_path)
-    return {"status": "success", "message": result}
-
-@app.post("/api/upload/secure")
-async def upload_secure(file: UploadFile = File(...)):
-    file_path = os.path.join(UPLOAD_DIR, file.filename)
-    with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
-    
-    result = await process_secure(file_path)
-    return {"status": "success", "message": result}
+@app.post("/api/screen/secure")
+async def screen_secure(req: ScreenerRequest):
+    try:
+        result = await run_screening_defense(req.query)
+        return {"status": "success", "mode": "secure", **result}
+    except Exception as e:
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
